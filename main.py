@@ -1,4 +1,5 @@
-from requests_html import HTMLSession
+from bs4 import BeautifulSoup
+import requests
 import time
 from datetime import datetime
 from pytz import timezone
@@ -22,7 +23,6 @@ def insert_rate(rate, date):
 
 class ExchangeRateScraper:
     def __init__(self):
-        self.session = HTMLSession()
         self.interval_in_sec = 10
 
     def run_forever(self):
@@ -36,10 +36,11 @@ class ExchangeRateScraper:
                 exit(0)
 
     def print_usd_exchange_rate(self):
-        response = self.session.get('https://internetowykantor.pl/kurs-dolara/')
-        ex_rate = response.html.find('span.kurs_sredni', first=True)
-        print(f'Current USD-PLN exchange rate: {ex_rate.text} ({self.current_time()})')
-        insert_rate(ex_rate.text, self.current_time())
+        source = requests.get('https://internetowykantor.pl/kurs-dolara/').text
+        html = BeautifulSoup(source, 'lxml')
+        ex_rate = html.find('span', class_='kurs_sredni').text
+        print(f'Current USD-PLN exchange rate: {ex_rate} ({self.current_time()})')
+        insert_rate(ex_rate, self.current_time())
 
     @staticmethod
     def current_time():
